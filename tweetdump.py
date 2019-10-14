@@ -3,7 +3,8 @@
 import tweepy  # https://github.com/tweepy/tweepy
 import csv
 import keys
-
+import json
+import re
 # 200 is the maximum allowed count
 Max_Tweet_Count = 200
 
@@ -20,55 +21,65 @@ def get_all_tweets(screen_name):
     # access_token_secret = 'your token secret'
 
     auth = tweepy.OAuthHandler(keys.consumer_key, keys.consumer_secret)
-    auth.set_access_token(keys.access_key, keys.access_secret)
+    auth.set_access_token(keys.access_token, keys.access_token_secret)
 
     # make initial request for most recent tweets
-    # (200 is the maximum allowed count)
+    # 200 is the maximum allowed count)
     api = tweepy.API(auth, wait_on_rate_limit=True,
                      wait_on_rate_limit_notify=True)
-
-    new_tweets = api.user_timeline(
-        screen_name=screen_name, count=Max_Tweet_Count, tweet_mode="extended")
 
     # initialize a list to hold all the tweepy Tweets
     alltweets = []
 
-    # save most recent tweets
-    alltweets.extend(new_tweets)
-
     # save the id of the oldest tweet less one
-    oldest = alltweets[-1].id - 1
+    #oldest = alltweets[-1].id
+    oldest = 1149000308925849600
 
     # keep grabbing tweets until there are no tweets left to grab
-    while len(new_tweets) > 0:
+    while True:
+        new_tweets = []
         print("getting tweets before %s" % (oldest))
-
         # all subsiquent requests use the max_id param to prevent duplicates
-        new_tweets = api.user_timeline(
-            screen_name=screen_name, count=Max_Tweet_Count,
-            max_id=oldest, tweet_mode="extended")
-
+        if oldest == 0:
+            new_tweets = api.user_timeline(screen_name=screen_name,
+                                           count=Max_Tweet_Count,
+                                           tweet_mode="extended")
+        else:
+            new_tweets = api.user_timeline(screen_name=screen_name,
+                                           count=Max_Tweet_Count,
+                                           max_id=oldest,
+                                           tweet_mode="extended")
         # save most recent tweets
         alltweets.extend(new_tweets)
-
         # update the id of the oldest tweet less one
         oldest = alltweets[-1].id - 1
-
         print("...%s tweets downloaded so far" % (len(alltweets)))
+        print("Oldest iud so far = %s" % (oldest))
+        if (len(new_tweets) <= 0):
+            break
 
-    # transform the tweepy tweets into a 2D array that will populate the csv
-    outtweets = [[tweet.id_str, tweet.created_at,
-                  tweet.full_text.encode("utf-8")]
-                 for tweet in alltweets]
+    write_Tweets(alltweets, screen_name)
 
-    # write the csv
-    with open('%s_tweets.csv' % screen_name, mode='w',
-              newline='', encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(['id_str', 'created_at', 'full_text'])
-        # for record in outtweets:
-        #    writer.writerow(record)
-        writer.writerows(outtweets)
+
+def write_Tweets(alltweets, screen_name):
+    mylist = []
+    for tweet in alltweets:
+        a = {}
+        cleaner_source = re.search("\>.+\<", tweet._json['source']).group(0)
+        clean_source = cleaner_source[1: -1]
+        a["source"] = clean_source
+        a["id_str"] = tweet._json["id_str"]
+        a["text"] = tweet._json["full_text"]
+        a["created_at"] = tweet._json["created_at"]
+        a["retweet_count"] = tweet._json["retweet_count"]
+        a["in_reply_to_user_id_str"] = tweet._json["in_reply_to_user_id_str"]
+        a["favorite_count"] = tweet._json["favorite_count"]
+        a["is_retweet"] = tweet._json["retweeted"]
+        mylist.append(a)
+
+        with open('%s_tweets.json' % screen_name, mode='a',
+                  newline='', encoding="utf-8") as f:
+            json.dump(mylist, f)
 
 
 if __name__ == '__main__':
