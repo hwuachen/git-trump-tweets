@@ -29,7 +29,7 @@ class MyStreamListener(StreamListener):
                 # print("Decoding extended tweet from REST API.")
                 text = data['full_text']
             else:
-                # print("Decoding short tweet.")
+                #print("Decoding short tweet.")
                 text = data['text']
            
             #source = re.search("\>.+\<", data['source']).group(0)
@@ -42,16 +42,27 @@ class MyStreamListener(StreamListener):
             favorite_count = data['favorite_count']
             is_retweet = data['retweeted']          
             
-            if screen_name == 'realDonaldTrump':
-                document_record = {'source':source, 'id_str': id_str, 'text':text, 
+            document_record = {'source':source, 'id_str': id_str, 'text':text, 
                     'created_at':created_at, 'retweet_count':retweet_count, 
                     'in_reply_to_user_id_str':in_reply_to_user_id_str,
                     'favorite_count':favorite_count,
                     'is_retweet':is_retweet }
+            db = MongoClient('localhost', 27017).News
 
-                db = MongoClient('localhost', 27017).News
+            if screen_name == 'realDonaldTrump':                
                 db.trumptweet.insert_one(document_record)
+                print("source = ", source)
+                print("id_str = ", id_str)
+                print("text= ", text)
+                print("created_at = ", created_at)
+                print("retweet_count = ", retweet_count)                                   
+                print("in_reply_to_user_id_str= ", in_reply_to_user_id_str)
+                print("favorite_count= ", favorite_count)
+                print("is_retweet = ", is_retweet)
+                print("screen_name = ", screen_name)
 
+            elif screen_name == 'Sunny23112519':
+                db.mytweet.insert_one(document_record)
                 print("source = ", source)
                 print("id_str = ", id_str)
                 print("text= ", text)
@@ -70,6 +81,15 @@ class MyStreamListener(StreamListener):
             #         'is_retweet':is_retweet }
             #     db.followers.insert_one(document_record)
             
+            # print("source = ", source)
+            # print("id_str = ", id_str)
+            # print("text= ", text)
+            # print("created_at = ", created_at)
+            # print("retweet_count = ", retweet_count)                                   
+            # print("in_reply_to_user_id_str= ", in_reply_to_user_id_str)
+            # print("favorite_count= ", favorite_count)
+            # print("is_retweet = ", is_retweet)
+            # print("screen_name = ", screen_name)
 
         except KeyError:
             print("Malformed tweet: %s" % data)
@@ -156,7 +176,8 @@ def main():
             print('---------------------------------------------------------------')
             twitter_stream = Stream(auth=auth, listener=MyStreamListener(), tweet_mode='extended')
             # twitter_stream.filter(languages=settings.SEARCH_LANG, track=settings.SEARCH_TERMS)
-            twitter_stream.filter(languages=settings.SEARCH_LANG,follow=["25073877"])
+            # twitter_stream.filter(languages=settings.SEARCH_LANG,follow=["25073877", "781935750183055361"])
+            twitter_stream.filter(follow=["781935750183055361"])
     except Exception as e:
         print(str(e))
         time.sleep(5)
