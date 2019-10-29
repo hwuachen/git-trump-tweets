@@ -25,15 +25,14 @@ def get_all_tweets(screen_name):
 
     # make initial request for most recent tweets
     # 200 is the maximum allowed count)
-    api = tweepy.API(auth, wait_on_rate_limit=True,
-                     wait_on_rate_limit_notify=True)
+    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     # initialize a list to hold all the tweepy Tweets
     alltweets = []
 
     # save the id of the oldest tweet less one
-    #oldest = alltweets[-1].id
-    oldest = 1149000308925849600
+    oldest = 0
+    #oldest = 1149000308925849600
 
     # keep grabbing tweets until there are no tweets left to grab
     while True:

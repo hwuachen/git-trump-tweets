@@ -9,69 +9,72 @@ from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
 from unidecode import unidecode
+from pymongo import MongoClient
+import re
 
-
-class MyStreamListener(StreamListener):
-    #on_status is shaddow by on_data
-    def on_status(self, status):
-        try:
-            if hasattr(status, 'retweeted_status'):
-                try:
-                    tweet = status.retweeted_status.extended_tweet["full_text"]
-                except:
-                    tweet = status.retweeted_status.text
-            else:
-                try:
-                    tweet = status.extended_tweet["full_text"]
-                except AttributeError:
-                    tweet = status.text
-
-            tweet = tweet.replace(',', '')
-            tweet = tweet.replace('\n', ' ')
-            tweet = unidecode(tweet)
-
-            username = status.user.screen_name
-            time_ms = status.timestamp_ms
-            print("on_status time_ms = ", time_ms)
-            print("on_status username=", username)
-            print("on_status tweet=", tweet)
-            # output_csv.write_tweet(time_ms, username, tweet)
-            # output_csv.print_tweet(time_ms, username, tweet)
-        except KeyError as e:
-            print(str(e))
-
-        return True     
-
+class MyStreamListener(StreamListener):      
     def on_error(self, status):
         print("Error: ", status)
 
     def on_disconnect(self, notice):
         print("Disconnected: ", notice)
     
-    def on_data(self, data):
+    def on_data(self, tweet):
         try:
-            j = json.loads(data)
-            if "delete" not in j:
-                if j.get('source'):
-                    print("source = ", j['source'])
-                else:
-                    print("source = None", j['source'])
-                print("id_str = ", j['id_str'])
-                print("text = ", j['text'])
-                print("created_at = ", j['created_at'])
-                if j.get('retweeted_status'):
-                    print("in_reply_to_user_id_str = ", j['retweeted_status']['in_reply_to_user_id_str'])
-                else:
-                    print("in_reply_to_user_id_str = None")
-                print("on_data favorite_count = ", j['favorite_count'])
-                print("on_data retweeted = ", j['retweeted'])
-                # screen_name = 'test'
-                # with open('%s_tweets.txt' % screen_name, mode='w', newline='', encoding="utf-8") as f:
-                #         json.dump(j, f)
-        except KeyError as e:
-            print(str(e))
-        return True           
+            data = json.loads(tweet)
+            if 'extended_tweet' in data:
+                # print("Decoding extended tweet from Streaming API.")
+                text = data['extended_tweet']['full_text']
+            elif 'full_text' in data:
+                # print("Decoding extended tweet from REST API.")
+                text = data['full_text']
+            else:
+                # print("Decoding short tweet.")
+                text = data['text']
+           
+            #source = re.search("\>.+\<", data['source']).group(0)
+            source = data['source']
+            id_str = data['id_str']
+            screen_name = data['user']['screen_name']
+            created_at = data['created_at']
+            retweet_count = data['retweet_count']
+            in_reply_to_user_id_str = data['in_reply_to_user_id_str']
+            favorite_count = data['favorite_count']
+            is_retweet = data['retweeted']          
+            
+            if screen_name == 'realDonaldTrump':
+                document_record = {'source':source, 'id_str': id_str, 'text':text, 
+                    'created_at':created_at, 'retweet_count':retweet_count, 
+                    'in_reply_to_user_id_str':in_reply_to_user_id_str,
+                    'favorite_count':favorite_count,
+                    'is_retweet':is_retweet }
 
+                db = MongoClient('localhost', 27017).News
+                db.trumptweet.insert_one(document_record)
+
+                print("source = ", source)
+                print("id_str = ", id_str)
+                print("text= ", text)
+                print("created_at = ", created_at)
+                print("retweet_count = ", retweet_count)                                   
+                print("in_reply_to_user_id_str= ", in_reply_to_user_id_str)
+                print("favorite_count= ", favorite_count)
+                print("is_retweet = ", is_retweet)
+                print("screen_name = ", screen_name)
+
+            # else:
+            #     document_record = {'source':source, 'id_str': id_str, 'text':text, 
+            #         'created_at':created_at, 'retweet_count':retweet_count, 
+            #         'in_reply_to_user_id_str':in_reply_to_user_id_str,
+            #         'favorite_count':favorite_count,
+            #         'is_retweet':is_retweet }
+            #     db.followers.insert_one(document_record)
+            
+
+        except KeyError:
+            print("Malformed tweet: %s" % data)
+    
+        return True
 
 def check_keys():
     if (not settings.CONSUMER_KEY) or (not settings.CONSUMER_SECRET) or (not settings.ACCESS_TOKEN) or \
@@ -138,11 +141,12 @@ def main():
     if not check_keys() or args.setup:
         run_setup()
 
-    global output_csv
-    # output_csv = Output(args.output, args.color, args.terse)
     settings.SEARCH_TERMS = args.keywords
     settings.SEARCH_LANG = args.languages
-    # output_csv.print_banner()
+
+    client  = MongoClient('localhost', 27017)
+    print ('Connected successfully to MongoDB!')
+    db=client["News"]
 
     try:
         while True:
@@ -151,7 +155,8 @@ def main():
             print('Time (ms)\tDate Time\tUsername\tTweet')
             print('---------------------------------------------------------------')
             twitter_stream = Stream(auth=auth, listener=MyStreamListener(), tweet_mode='extended')
-            twitter_stream.filter(languages=settings.SEARCH_LANG, track=settings.SEARCH_TERMS)
+            # twitter_stream.filter(languages=settings.SEARCH_LANG, track=settings.SEARCH_TERMS)
+            twitter_stream.filter(languages=settings.SEARCH_LANG,follow=["25073877"])
     except Exception as e:
         print(str(e))
         time.sleep(5)
