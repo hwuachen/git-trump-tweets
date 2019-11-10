@@ -77,10 +77,6 @@ def writeToFile(alltweets, screen_name):
     
 
 def writeToDB(alltweets, screen_name):
-      # write to DB, however inert_many always throw exception
-    # db = MongoClient('localhost', 27017).charon
-    # db.trump_tweets.create_index("id_str", unique = True)
-    # db.trump_tweets.insert_many(mylist, ordered=False)
     if screen_name == "realDonaldTrump":
         with MongoClient('localhost', 27017) as connection:
             db = connection["charon"]
@@ -88,9 +84,12 @@ def writeToDB(alltweets, screen_name):
             collection.create_index("id_str", unique = True)
             for item in alltweets:
                 try:
+                    # write to DB, however inert_many always throw exception so use insert_one
+                    # db.trump_tweets.insert_many(alltweets, ordered=False)
                     db.trump_tweets.insert_one(item)
                 except:
-                    print("Duplicate key")
+                    #print("Duplicate key")
+                    continue
         print("Total trump tweets in DB = ", collection.count_documents({}))
 
 
