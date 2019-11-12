@@ -52,6 +52,7 @@ def get_all_tweets(screen_name):
     print("total tweets count =", len(alltweets))
     writeToFile(alltweets, screen_name)
     writeToDB(alltweets, screen_name)
+    #writeToCSV(alltweets, screen_name)
 
 
 def toList(new_tweets, alltweets):
@@ -92,7 +93,28 @@ def writeToDB(alltweets, screen_name):
                     continue
         print("Total trump tweets in DB = ", collection.count_documents({}))
 
+# def writeToCSV(alltweets, screen_name):
+#         with open('%s.csv' % screen_name,  mode='w') as csvfile:
+#             fieldnames = ['source', 'id_str', 
+#                           'text', 'create_at', 
+#                           'retweet_count', 'in_reply_to_user_id_str', 
+#                           'favorite_count', 'is_retweet']
+#             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#             writer.writeheader()
+#             for tweet in alltweets:
+#                 cleaner_source = re.search("\>.+\<", tweet.source).group(0)
+#                 clean_source = cleaner_source[1: -1]
+#                 writer.writerow({'source': clean_source,
+#                             'id_str': tweet.id_str, 
+#                             'text': tweet.text, 
+#                             'create_at': tweet.create_at,
+#                             'retweet_count': tweet.retweet_count,
+#                             'in_reply_to_user_id_str': tweet.in_reply_to_user_id_str,
+#                             'favorite_count': tweet.favorite_count,
+#                             'is_retweet': tweet.is_retweet
+#                             })
+#         print("Alltweets has items = ", len(alltweets))
 
 if __name__ == '__main__':
     # pass in the username of the account you want to download
-    get_all_tweets("realDonaldTrump")
+    get_all_tweets("realDonaldTrump")   

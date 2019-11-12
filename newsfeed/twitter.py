@@ -11,22 +11,10 @@ from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
 from logs import Logs
-import settings
 
 # The keys for the Twitter account we're using for API requests and tweeting
-# Read from environment variables.
-#TWITTER_ACCESS_TOKEN = getenv("TWITTER_ACCESS_TOKEN")
-#TWITTER_ACCESS_TOKEN_SECRET = getenv("TWITTER_ACCESS_TOKEN_SECRET")
-
-TWITTER_ACCESS_TOKEN = '781935750183055361-gzWtt0scWq9VvBEqI794gBqjIqOa9VB'
-TWITTER_ACCESS_TOKEN_SECRET = 'A1fPWtmeEDh9MiMkGbGgm1JeHrhZ5fzx4CAbSgmbqdfCq'
-
-# The keys for the Twitter app we're using for API requests
-# (https://apps.twitter.com/app/13239588). Read from environment variables.
-# TWITTER_CONSUMER_KEY = getenv("TWITTER_CONSUMER_KEY")
-TWITTER_CONSUMER_SECRET = 'cDAgU4Z0rsozQdi42caQygH3p'
-TWITTER_CONSUMER_KEY = 'SL8slK40itsXcKK2pQSVChzei7tzFlTLoKaUtT2Ws3iP79h1Df'
-
+# Read from settings.
+import settings
 
 # The user ID of @realDonaldTrump.
 TRUMP_USER_ID = "25073877"
@@ -43,7 +31,7 @@ EMOJI_SHRUG = "¯\\_(\u30c4)_/¯"
 MAX_TWEET_SIZE = 140
 
 # The number of worker threads processing tweets.
-NUM_THREADS = 100
+NUM_THREADS = 10
 
 # The maximum time in seconds that workers wait for a new task on the queue.
 QUEUE_TIMEOUT_S = 5 * 60

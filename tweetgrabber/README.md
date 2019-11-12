@@ -1,5 +1,9 @@
-# git-trump-tweets - Sample code to get trump tweets from Twitter API and Twitter streaming 
-tweetgrabber.py - get trump tweets from Twitter API 
+# git-trump-tweets 
+
+tweetgrabber.py - get Donald Trump's tweets @
+[Donald Trump's tweets](https://twitter.com/realDonaldTrump)  
+from [Twitter Streaming APIs](https://dev.twitter.com/streaming/overview). 
+Then it will save all tweets to a json file, as well as MongoDB using pymongo.
 
 ## Getting Started
 

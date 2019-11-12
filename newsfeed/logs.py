@@ -18,12 +18,8 @@ LOGS_FORMAT = ("%(asctime)s "
 # The path to the log file for local logging.
 LOG_FILE = "/tmp/main.log"
 
-# The path to the log file for the local fallback of cloud logging.
-FALLBACK_LOG_FILE = "/tmp/fallback.log"
-
 # The maximum size in bytes for each local log file.
 MAX_LOG_BYTES = 10 * 1024 * 1024
-
 
 class Logs:
     """A helper for logging locally."""

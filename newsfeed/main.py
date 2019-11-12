@@ -6,6 +6,7 @@ from threading import Thread
 from time import sleep
 from logs import Logs
 from twitter import Twitter
+from analysis import Analysis
 
 # The duration of the smallest backoff step in seconds.
 BACKOFF_STEP_S = 0.1
@@ -43,11 +44,13 @@ class Monitor:
     def start(self):
         """Starts the Web server background thread."""
 
+        print("Starts the Web server background thread.")
         self.thread.start()
 
     def stop(self):
         """Stops the Web server and background thread."""
-
+        
+        print("stops the Web server background thread.")
         self.server.shutdown()
         self.server.server_close()
 
@@ -74,22 +77,70 @@ class Main:
         self.logs = Logs(name="main")
         self.twitter = Twitter()
 
+
+    def toList(tweet, alltweets):
+        item = {}
+        cleaner_source = re.search("\>.+\<", tweet._json['source']).group(0)
+        clean_source = cleaner_source[1: -1]
+        item["source"] = clean_source
+        item["id_str"] = tweet._json["id_str"]
+        item["text"] = tweet._json["full_text"]
+        item["created_at"] = tweet._json["created_at"]
+        item["retweet_count"] = tweet._json["retweet_count"]
+        item["in_reply_to_user_id_str"] = tweet._json["in_reply_to_user_id_str"]
+        item["favorite_count"] = tweet._json["favorite_count"]
+        item["is_retweet"] = tweet._json["retweeted"]
+        alltweets.append(item)
+
+
+    def writeToFile(alltweets, screen_name):
+        #write to a json file
+        with open('%s_tweets.json' % screen_name, mode='w',
+            newline='', encoding="utf-8") as f:
+            json.dump(alltweets, f)
+        return
+
+    
+    def writeToDB(alltweets, screen_name):
+        if screen_name == "realDonaldTrump":
+            with MongoClient('localhost', 27017) as connection:
+                db = connection["charon"]
+                collection = db["trump_tweets"]
+                collection.create_index("id_str", unique = True)
+                for item in alltweets:
+                    try:
+                        # write to DB, however inert_many always throw exception so use insert_one
+                        # db.trump_tweets.insert_many(alltweets, ordered=False)
+                        db.trump_tweets.insert_one(item)
+                    except:
+                        #print("Duplicate key")
+                        continue
+            print("Total trump tweets in DB = ", collection.count_documents({}))
+        return
+
+
     def twitter_callback(self, tweet):        
         """Analyzes Trump tweets, trades stocks, and tweets about it."""
 
+        # save the tweet
+        alltweets = []
+        screen_name = "realDonaldTrump"
+        toList(tweet, alltweets)  
+        writeToFile(alltweets, screen_name)
+        writeToDB(alltweets, screen_name)
+
         # Initialize the Analysis, Logs, Trading, and Twitter instances inside
         # the callback to create separate httplib2 instances per thread.
-        # analysis = Analysis()
-        # logs = Logs(name="main-callback")
-        logs = Logs(name="main")
+        analysis = Analysis()
+        logs = Logs(name="main-callback")
         self.logs.info("twitter_callback starts") 
         
-        # Analyze the tweet.
-        #companies = analysis.find_companies(tweet)
+        #Analyze the tweet.
+        companies = analysis.find_companies(tweet)
         
-        # logs.info("Using companies: %s" % companies)
-        # if not companies:
-        #     return
+        logs.info("Using companies: %s" % companies)
+        if not companies:
+             return
 
         # Trade stocks.
         # trading = Trading()
