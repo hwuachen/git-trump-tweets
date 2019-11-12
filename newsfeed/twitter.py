@@ -340,12 +340,13 @@ class TwitterListener(StreamListener):
             logs.error("Malformed tweet: %s" % tweet)
             return
 
-        logs.info("handle_data screen_name: %s" % screen_name)
-        logs.info("handle_data screen_name: %s" % tweet)
+        logs.info("handle_data screen_name: %s" % screen_name )
+        logs.info("handle_data user_id_str: %s" % user_id_str)
+        #logs.info("handle_data screen_name: %s" % tweet)
 
         # We're only interested in tweets from Mr. Trump himself, so skip the
         # rest.
-        if user_id_str != TRUMP_USER_ID:
+        if user_id_str != TRUMP_USER_ID or screen_name != "realDonaldTrump" :
             logs.debug("Skipping tweet from user: %s (%s)" %
                        (screen_name, user_id_str))
             return
