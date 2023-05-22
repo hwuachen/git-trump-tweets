@@ -7,6 +7,6 @@ lxml==4.3.1
 oauth2==1.9.0.post1
 pytest==4.0.1
 pytz==2018.9
-requests==2.21.0
+requests==2.31.0
 tqdm==4.31.0
 tweepy==3.7.0
